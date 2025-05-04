@@ -1,0 +1,27 @@
+﻿{
+  "schema": 1,
+  "description": "Creates release notes based on commits",
+  "execution_settings": {
+    "default": {
+      "max_tokens": 4096,
+      "temperature": 0.6,
+      "top_p": 0.0,
+      "presence_penalty": 0.0,
+      "frequency_penalty": 0.0
+    }
+  },
+  "input_variables": [
+    {
+      "name": "commits",
+      "description": "List of commits",
+      "default": "",
+      "is_required": true
+    },
+    {
+      "name": "version",
+      "description": "Version number",
+      "default": "",
+      "is_required": true
+    }
+  ]
+}

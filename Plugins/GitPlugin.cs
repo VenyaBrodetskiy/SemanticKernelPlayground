@@ -3,7 +3,7 @@ using System.Text;
 using LibGit2Sharp;
 using Microsoft.SemanticKernel;
 
-namespace SemanticKernelPlayground;
+namespace SemanticKernelPlayground.Plugins;
 
 public class GitPlugin
 {
@@ -43,10 +43,10 @@ public class GitPlugin
         var sb = new StringBuilder();
         var repoName = Path.GetFileName(repo.Info.WorkingDirectory.TrimEnd(Path.DirectorySeparatorChar));
         sb.AppendLine($"### Last {nOfCommits} commits in `{repoName}`");
-        foreach (var c in commits)
+        foreach (var commit in commits)
         {
             sb.AppendLine(
-                $"- `{c.Id.Sha[..8]}` • {c.Author.Name} on {c.Author.When:yyyy-MM-dd}  \n  {c.MessageShort}"
+                $"- `{commit.Id.Sha[..8]}` • {commit.Author.Name} on {commit.Author.When:yyyy-MM-dd}  \n  {commit.Message}"
             );
         }
 

@@ -2,7 +2,7 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using SemanticKernelPlayground;
+using SemanticKernelPlayground.Plugins;
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -18,6 +18,9 @@ var builder = Kernel.CreateBuilder()
 
 builder.Plugins.AddFromType<GitPlugin>();
 
+var promptPlugins = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", "PromptPlugins") ?? throw new ApplicationException("PromptPlugins are missing");
+
+builder.Plugins.AddFromPromptDirectory(promptPlugins);
 var kernel = builder.Build();
 
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
