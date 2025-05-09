@@ -9,3 +9,140 @@ A .NET 9 console application that implements a chat interface using Microsoft's 
 
 ## Setup
 1. Configure Azure OpenAI credentials in `appsettings.Development.json`:
+
+
+
+<br><br><br>
+
+#
+#
+#
+
+<br><br><br>
+
+# Enhanced Functionalities
+
+- A custom GitPlugin to fetch Git commits
+- A prompt plugin to generate release notes
+- A system prompt to guide the LLM
+- Patch SemVer version on new release
+- Store latest version in persistent file `version.txt`
+
+---
+
+## ✅ Prerequisites
+
+1. Fill `appsettings.Development.json` like:
+   ```json
+   {
+     "ModelName": "gpt-4.1", // or your model
+     "Endpoint": "https://your-openai-endpoint.openai.azure.com/",
+     "ApiKey": "your-api-key"
+   }
+   ```
+
+2. Run the project:
+   ```sh
+   dotnet run
+   ```
+
+---
+
+## ✅ Functionality Test Steps
+
+### 🔹 1. Set Git Repository Path
+Prompt:
+```
+setrepo C:\Path\To\Your\GitRepo
+```
+Expected:
+```
+Repository path set to: ...
+```
+
+---
+
+### 🔹 2. Get Latest Git Commits
+Prompt:
+```
+getlatestcommits 5
+```
+Expected:
+```
+- Commit message 1 (by Author on Date)
+- Commit message 2 ...
+```
+
+---
+
+### 🔹 3. Generate Release Notes
+Prompt:
+```
+generate release notes based on last 5 commits
+```
+Expected:
+```
+## Changelog
+
+### Commits
+- Fix bug X by 'name' on 'date'
+- Add feature Y ...
+```
+
+---
+
+### 🔹 4. Debug Kernel Functions
+Set breakpoints inside:
+- `GitPlugin.GetLatestCommits(...)`
+- `GitPlugin.CreatePlugin(...)`
+- Lambda function in `SetRepositoryPath(...)`
+
+Inspect values and outputs while testing.
+
+---
+
+### 🔹 5. System Prompt Validation
+Prompt:
+```
+What can you do?
+```
+Expected:
+```
+You can read Git commits and generate release notes...
+```
+
+---
+
+### 🔹 6. Version Management
+Prompt:
+```
+getlatestversion
+```
+Expected:
+```
+1.0.0
+```
+
+Prompt:
+```
+bumppatchversion
+```
+Expected:
+```
+Version bumped to 1.0.1
+```
+
+---
+
+## 📦 Files of Interest
+
+| File | Purpose |
+|------|---------|
+| `Program.cs` | Main chatbot loop and plugin registration |
+| `GitPlugin.cs` | Custom plugin to access Git commit history and versioning |
+| `ReleaseNotes/skprompt.txt` | Prompt template for changelog |
+| `ReleaseNotes/config.json` | Prompt configuration |
+| `appsettings.Development.json` | Azure OpenAI config |
+| `version.txt` | Stores the current release version |
+
+---

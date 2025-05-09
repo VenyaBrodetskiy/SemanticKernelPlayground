@@ -8,5 +8,17 @@
     "top_p": 0.9,
     "presence_penalty": 0,
     "frequency_penalty": 0
-  }
+  },
+  "outputs": [
+    {
+      "name": "releaseNotes",
+      "type": "text"
+    }
+  ],
+  "inputs": [
+    {
+      "name": "commits",
+      "type": "text"
+    }
+  ]
 }

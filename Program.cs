@@ -13,14 +13,14 @@ var modelName = configuration["ModelName"] ?? throw new ApplicationException("Mo
 var endpoint = configuration["Endpoint"] ?? throw new ApplicationException("Endpoint not found");
 var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey not found");
 
-string? repositoryPath = null;
+var repositoryPathRef = new RepositoryPathHolder();
 
 var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
 
 
 // Add GitPlugin
-builder.Plugins.Add(new GitPlugin(() => repositoryPath).CreatePlugin());
+builder.Plugins.Add(new GitPlugin(() => repositoryPathRef.Path).CreatePlugin());
 
 // Add ReleaseNotes prompt plugin
 var promptPath = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", "PromptPlugins");
@@ -31,7 +31,7 @@ builder.Plugins.Add(KernelPluginFactory.CreateFromFunctions("Custom", new[]
 {
     KernelFunctionFactory.CreateFromMethod((string path) =>
     {
-        repositoryPath = path;
+        repositoryPathRef.Path = path;
         return $"Repository path set to:\n{path}";
     }, "SetRepositoryPath", "Sets Git repo path for GitPlugin")
 }));
@@ -91,3 +91,8 @@ do
 
 
 } while (true);
+
+public class RepositoryPathHolder
+{
+    public string? Path { get; set; }
+}

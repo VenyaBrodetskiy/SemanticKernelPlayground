@@ -18,6 +18,7 @@
 
 	<ItemGroup>
 		<Content Include="Plugins\PromptPlugins\**\*" CopyToOutputDirectory="PreserveNewest" />
+		<Content Include="version.txt" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
   <ItemGroup>

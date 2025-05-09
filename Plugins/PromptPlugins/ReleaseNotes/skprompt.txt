@@ -13,4 +13,4 @@ Return the changelog below:
 
 ## Changelog
 
-{{~}}
+{{releaseNotes}}
