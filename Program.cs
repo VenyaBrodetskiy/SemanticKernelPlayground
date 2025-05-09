@@ -2,6 +2,7 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using SemanticKernelPlayground.Plugins;
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -12,8 +13,28 @@ var modelName = configuration["ModelName"] ?? throw new ApplicationException("Mo
 var endpoint = configuration["Endpoint"] ?? throw new ApplicationException("Endpoint not found");
 var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey not found");
 
+string? repositoryPath = null;
+
 var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
+
+
+// Add GitPlugin
+builder.Plugins.Add(new GitPlugin(() => repositoryPath).CreatePlugin());
+
+// Add ReleaseNotes prompt plugin
+var promptPath = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", "PromptPlugins");
+builder.Plugins.AddFromPromptDirectory(promptPath);
+
+// Add "setrepo" command
+builder.Plugins.Add(KernelPluginFactory.CreateFromFunctions("Custom", new[]
+{
+    KernelFunctionFactory.CreateFromMethod((string path) =>
+    {
+        repositoryPath = path;
+        return $"Repository path set to:\n{path}";
+    }, "SetRepositoryPath", "Sets Git repo path for GitPlugin")
+}));
 
 var kernel = builder.Build();
 
@@ -25,6 +46,12 @@ AzureOpenAIPromptExecutionSettings openAiPromptExecutionSettings = new()
 };
 
 var history = new ChatHistory();
+var systemPrompt = """
+You are a helpful assistant with Git and prompt capabilities.
+You can fetch recent commits and generate release notes.
+Use GitPlugin functions and ReleaseNotes prompt when requested.
+""";
+history.AddSystemMessage(systemPrompt);
 
 do
 {

@@ -1,0 +1,16 @@
+﻿You are a release assistant. Based on the following list of git commits, generate a clean and concise changelog in markdown format.
+
+Group changes logically under sections like Features, Fixes, and Improvements.
+
+Each item should include a short summary, author name, and date if available.
+
+Commits:
+{{commits}}
+
+---
+
+Return the changelog below:
+
+## Changelog
+
+{{~}}
