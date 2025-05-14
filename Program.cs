@@ -16,12 +16,13 @@ var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey n
 var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
 
-builder.Plugins.AddFromType<GitPlugin>();
-
 var promptPlugins = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", "PromptPlugins") ?? throw new ApplicationException("PromptPlugins are missing");
 
 builder.Plugins.AddFromPromptDirectory(promptPlugins);
 var kernel = builder.Build();
+
+var gitPlugin = new GitPlugin(kernel);
+kernel.Plugins.AddFromObject(gitPlugin);
 
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 

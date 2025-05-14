@@ -1,6 +1,6 @@
 ﻿{
   "schema": 1,
-  "description": "Creates release notes based on commits",
+  "description": "private function don't call it",
   "execution_settings": {
     "default": {
       "max_tokens": 4096,
@@ -13,13 +13,7 @@
   "input_variables": [
     {
       "name": "commits",
-      "description": "List of commits",
-      "default": "",
-      "is_required": true
-    },
-    {
-      "name": "version",
-      "description": "Version number",
+      "description": "Data about commits",
       "default": "",
       "is_required": true
     }

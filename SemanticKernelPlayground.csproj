@@ -21,6 +21,12 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Plugins\PromptPlugins\PatternsAnalyzer\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Plugins\PromptPlugins\PatternsAnalyzer\skprompt.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Plugins\PromptPlugins\ReleaseNotes\config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
