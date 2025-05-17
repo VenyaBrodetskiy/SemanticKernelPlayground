@@ -27,6 +27,7 @@ A .NET 9 console application that implements a chat interface using Microsoft's 
 - A system prompt to guide the LLM
 - Patch SemVer version on new release
 - Store latest version in persistent file `version.txt`
+- Codebase indexing & keyword search (`docsearch`)
 
 ---
 
@@ -134,6 +135,38 @@ Version bumped to 1.0.1
 
 ---
 
+### 🔹 7. Index The Code
+
+After you run `setrepo`, the app will automatically scan **all** `.cs` files under your repo, break them into 10-line chunks, and store them under a `"codebase"` collection.
+
+You can re-index anytime by reissuing:
+```text
+Me > setrepo C:\Path\To\Your\GitRepo
+```
+You’ll see:
+```text
+Indexing .cs files into memory...
+Indexed 42 files into memory.
+```
+
+---
+
+### 🔹 8. Search The Code
+
+Use the `docsearch` command followed by any keyword or snippet:
+```text
+Me > docsearch InitializeComponent
+```
+Expected output (top matching chunks):
+```text
+Agent >
+- public void InitializeComponent() { … }
+- this.InitializeComponent();
+…
+```
+
+---
+
 ## 📦 Files of Interest
 
 | File | Purpose |
@@ -144,5 +177,7 @@ Version bumped to 1.0.1
 | `ReleaseNotes/config.json` | Prompt configuration |
 | `appsettings.Development.json` | Azure OpenAI config |
 | `version.txt` | Stores the current release version |
+| `CodeIndexer.cs` | Splits `.cs` into chunks & saves into in-memory store |
+| `TextMemoryPlugin.cs` | In-process store with `SaveAsync`/`RetrieveAsync`/`SearchAsync` |
 
 ---

@@ -15,6 +15,8 @@ var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey n
 
 var repositoryPathRef = new RepositoryPathHolder();
 
+var textMemoryPlugin = new TextMemoryPlugin();
+
 var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
 
@@ -36,6 +38,9 @@ builder.Plugins.Add(KernelPluginFactory.CreateFromFunctions("Custom", new[]
     }, "SetRepositoryPath", "Sets Git repo path for GitPlugin")
 }));
 
+// Register in-memory TextMemoryPlugin under the name "TextMemory"
+builder.Plugins.Add(KernelPluginFactory.CreateFromObject(textMemoryPlugin, "TextMemory"));
+
 var kernel = builder.Build();
 
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
@@ -47,9 +52,9 @@ AzureOpenAIPromptExecutionSettings openAiPromptExecutionSettings = new()
 
 var history = new ChatHistory();
 var systemPrompt = """
-You are a helpful assistant with Git and prompt capabilities.
-You can fetch recent commits and generate release notes.
-Use GitPlugin functions and ReleaseNotes prompt when requested.
+You are a helpful assistant with Git, release-notes, and codebase search.
+Use GitPlugin for commits, ReleaseNotes prompt when asked,
+and the TextMemoryPlugin for code searches (via `docsearch`).
 """;
 history.AddSystemMessage(systemPrompt);
 
@@ -65,17 +70,47 @@ do
         break;
     }
 
-    history.AddUserMessage(userInput!);
+    // 1) Manual setrepo handler: set path & index code
+    if (userInput.StartsWith("setrepo ", StringComparison.OrdinalIgnoreCase))
+    {
+        var path = userInput["setrepo ".Length..].Trim();
+        repositoryPathRef.Path = path;
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"Repository path set to:\n{path}");
+        Console.ResetColor();
 
-    var streamingResponse =
-        chatCompletionService.GetStreamingChatMessageContentsAsync(
-            history,
-            openAiPromptExecutionSettings,
-            kernel);
+        Console.WriteLine("Indexing .cs files into memory...");
+        await CodeIndexer.IndexCodeAsync(path, textMemoryPlugin);
+        Console.WriteLine("Indexing complete.");
+        continue;
+    }
+
+    // 2) docsearch handler: search in-memory store
+    if (userInput.StartsWith("docsearch ", StringComparison.OrdinalIgnoreCase))
+    {
+        var query = userInput["docsearch ".Length..];
+        var result = await textMemoryPlugin.SearchAsync("codebase", query);
+
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("Agent >");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine(result);
+        Console.ResetColor();
+        continue;
+    }
+
+    history.AddUserMessage(userInput);
 
     Console.ForegroundColor = ConsoleColor.Green;
     Console.Write("Agent > ");
     Console.ResetColor();
+
+        var streamingResponse =
+        chatCompletionService.GetStreamingChatMessageContentsAsync(
+            history,
+            openAiPromptExecutionSettings,
+            kernel);
 
     var fullResponse = "";
     await foreach (var chunk in streamingResponse)
@@ -86,9 +121,7 @@ do
         fullResponse += chunk.Content;
     }
     Console.WriteLine();
-
     history.AddMessage(AuthorRole.Assistant, fullResponse);
-
 
 } while (true);
 
