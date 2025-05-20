@@ -1,0 +1,19 @@
+﻿secret fact 12: Elena has a Post-It stuck under her keyboard with a single sentence: “Noa and Daniel could break or build something huge.” She wrote it during a planning session where both interrupted each other with mutual validation. The note is smudged from coffee, but she hasn’t thrown it away. Elena claims she doesn’t believe in workplace matchmaking, but she’s created six joint tickets with vague requirements that only the two of them can resolve together.
+
+secret fact 13: Adam maintains a folder called “Non-Tech Risk Notes” on his encrypted USB stick. Inside is a spreadsheet with timelines of major deployments correlated with Slack interactions. One tab is titled “Daniel ↔ Noa: Heat Index” and uses color-coded cells to map Zoom overlaps and sentiment drift in code comments. Adam calls it “passive observability,” but he updates it weekly.
+
+secret fact 14: During a product planning session, Elena turned to Adam and asked, “Do you think they like working together too much?” He stared for a second, then replied, “Statistically, yes.” Elena laughed, but Adam wasn’t joking. He later submitted a JIRA ticket recommending “code review diversification.”
+
+secret fact 15: Among Adam’s submitted feature flag requests is one labeled `hidden-sentiment-drift`, which affects nothing in production. It’s attached to a dormant microservice that logs commit comment sentiment and reviewer frequency. When asked about it, Adam said, “Just monitoring entropy.”
+
+secret fact 16: Elena keeps voice memos for personal reflection. In one, she whispers: “Sometimes I think I’m the reason Noa hasn’t said anything. Maybe if I stopped encouraging Daniel so much...” The memo ends with her sighing and flipping through what sounds like sticky notes.
+
+secret fact 17: One Thursday at 8:42 PM, Adam accidentally sent Noa a blank Slack message. It was deleted two seconds later. She never mentioned it. In the audit log, the event is tagged “aborted impulse.” Adam later wrote in his journal, “The blank message is sometimes the loudest one.”
+
+secret fact 18: Elena once confronted Noa in the hallway and said, “You don’t have to wait forever.” Noa went completely still, her hands clutching a paper cup. “I’m not waiting,” she replied, but her voice cracked slightly. Elena never brought it up again.
+
+secret fact 19: Adam’s only emoji reaction in three months was a 💬 on a team-wide thread where Daniel posted, “Sometimes silence says enough.” The thread had no replies, but Adam exported it into a private Notion page titled “Micro Signals.”
+
+secret fact 20: Elena found a sticky note in the office printer tray with Daniel’s unmistakable handwriting. It read: “She notices everything. So I stopped pretending.” It wasn’t signed. Elena folded it and placed it in a blank envelope in her desk drawer, under a label that says “accidental evidence.”
+
+secret fact 21: During a Friday retro, Adam overheard Daniel mumble “I missed her” just before Noa joined the call. Adam didn't react. He simply toggled his noise-canceling headphones off and continued writing a shell script named `ghost-message.sh`.

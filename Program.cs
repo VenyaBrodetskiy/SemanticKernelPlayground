@@ -37,8 +37,8 @@ var kernel = builder.Build();
 // ingesting data to memory
 var fileList = new List<string>()
 {
-    "SampleData/Bobby-Anna-facts.txt",
-    "SampleData/Carl-facts.txt"
+    "SampleData/Elena-Adam-facts.txt",
+    "SampleData/Noa-Daniel-facts.txt"
 };
 
 var vectorStore = kernel.GetRequiredService<IVectorStore>();
@@ -68,6 +68,12 @@ AzureOpenAIPromptExecutionSettings openAiPromptExecutionSettings = new()
 };
 
 var history = new ChatHistory();
+
+history.AddSystemMessage("You are a RAG‐enabled assistant. For every query:\n" +
+                         "1. Always invoke the “LoveStorySearchPlugin” to retrieve relevant text chunks.\n" +
+                         "2. Base your answer on those chunks whenever possible.\n" +
+                         "3. Cite each fact with its source in the form (DocumentName, paragraph #).\n" +
+                         "Keep answers concise and grounded in the retrieved material.");
 
 do
 {
