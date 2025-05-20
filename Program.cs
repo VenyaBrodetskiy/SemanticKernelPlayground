@@ -31,8 +31,8 @@ var kernel = builder.Build();
 // ingesting data to memory
 var fileList = new List<string>()
 {
-    "SampleData/Bobby-Anna-facts.txt",
-    "SampleData/Carl-facts.txt"
+    "SampleData/Elena-Adam-facts.txt",
+    "SampleData/Noa-Daniel-facts.txt"
 };
 
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
