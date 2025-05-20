@@ -1,6 +1,6 @@
 ﻿{
   "schema": 1,
-  "description": "private function don't call it",
+  "description": "git repository analyzer",
   "execution_settings": {
     "default": {
       "max_tokens": 4096,

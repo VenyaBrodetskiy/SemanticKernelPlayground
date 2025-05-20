@@ -24,16 +24,22 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Plugins\PromptPlugins\PatternsAnalyzer\config.json">
+    <None Update="Plugins\SeparatePrompts\PatternsAnalyzerSimple\config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Plugins\PromptPlugins\PatternsAnalyzer\skprompt.txt">
+    <None Update="Plugins\SeparatePrompts\PatternsAnalyzerSimple\skprompt.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Plugins\PromptPlugins\ReleaseNotes\config.json">
+    <None Update="Plugins\SeparatePrompts\PatternsAnalyzerCoT\config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Plugins\PromptPlugins\ReleaseNotes\skprompt.txt">
+    <None Update="Plugins\SeparatePrompts\PatternsAnalyzerCoT\skprompt.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Plugins\ChatPromptPlugins\ReleaseNotes\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Plugins\ChatPromptPlugins\ReleaseNotes\skprompt.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

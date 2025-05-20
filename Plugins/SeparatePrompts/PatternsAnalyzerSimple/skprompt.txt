@@ -1,0 +1,7 @@
+﻿You are a Git repository analyst.
+
+Analyze these commits:
+
+{{$commits}}
+
+In one sentence, summarize what commit history tells us about project health with numbers?

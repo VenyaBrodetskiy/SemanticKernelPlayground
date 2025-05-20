@@ -1,14 +1,43 @@
 ﻿using System.ComponentModel;
 using System.Text;
+using System.Text.Json;
 using LibGit2Sharp;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace SemanticKernelPlayground.Plugins;
 
-public class GitPlugin(Kernel kernel)
+public class GitPlugin
 {
     private string? _repoPath;
+    private readonly Kernel _kernel;
+
+    public GitPlugin()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true)
+            .Build();
+
+        var modelName = configuration["ModelName"] ?? throw new ApplicationException("ModelName not found");
+        var endpoint = configuration["Endpoint"] ?? throw new ApplicationException("Endpoint not found");
+        var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey not found");
+
+        var builder = Kernel.CreateBuilder()
+            .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
+
+        builder.Services.AddLogging(configure => configure.AddConsole());
+        builder.Services.AddLogging(configure => configure.SetMinimumLevel(LogLevel.Information));
+
+        var promptPlugins = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", "SeparatePrompts") ?? throw new ApplicationException("PromptPlugins are missing");
+
+        builder.Plugins.AddFromPromptDirectory(promptPlugins);
+        _kernel = builder.Build();
+    }
 
     [KernelFunction]
     [Description("Set the repository path for git operations")]
@@ -79,29 +108,43 @@ public class GitPlugin(Kernel kernel)
             commitData.AppendLine();
         }
 
-        var args = new KernelArguments
+        // ######### SIMPLE PROMPT #########
+        var resultSimple = await _kernel.InvokeAsync("SeparatePrompts", "PatternsAnalyzerSimple", new ()
         {
             ["commits"] = commitData.ToString()
-        };
+        });
 
-        args.ExecutionSettings = new Dictionary<string, PromptExecutionSettings>
+        Console.WriteLine($"\n###############################\n" +
+                          $"Simple analysis results: \n{resultSimple}");
+
+        // ######### CoT structured PROMPT #########
+        var args = new KernelArguments
         {
+            ["commits"] = commitData.ToString(),
+            ExecutionSettings = new Dictionary<string, PromptExecutionSettings>
             {
-                "default",
-                new AzureOpenAIPromptExecutionSettings
                 {
-                    ResponseFormat = typeof(PatterAnalysisResult)
+                    "default",
+                    new AzureOpenAIPromptExecutionSettings
+                    {
+                        ResponseFormat = typeof(GitHistoryAnalysisResult)
+                    }
                 }
             }
         };
+        var resultCoT = await _kernel.InvokeAsync("SeparatePrompts", "PatternsAnalyzerCoT", args);
 
-        var result = await kernel.InvokeAsync("PromptPlugins", "PatternsAnalyzer", args);
+        var result = JsonSerializer.Deserialize<GitHistoryAnalysisResult>(resultCoT.ToString() ?? string.Empty) ?? new GitHistoryAnalysisResult();
+        Console.WriteLine($"\n###############################\n" +
+                          $"Chain of thought analysis results: \n" +
+                          $"Reasoning: {result.Reasoning}\n" +
+                          $"Answer: {result.Answer}");
         return result.ToString();
     }
 }
 
-public record PatterAnalysisResult
+public record GitHistoryAnalysisResult
 {
     public string Reasoning { get; set; } = string.Empty;
-    public string Patterns { get; set; } = string.Empty;
+    public string Answer { get; set; } = string.Empty;
 }
