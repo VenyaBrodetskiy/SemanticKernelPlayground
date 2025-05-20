@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using ConsoleDump;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -19,7 +20,7 @@ var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
 
 builder.Services.AddLogging(configure => configure.AddConsole());
-builder.Services.AddLogging(configure => configure.SetMinimumLevel(LogLevel.Debug));
+builder.Services.AddLogging(configure => configure.SetMinimumLevel(LogLevel.Information));
 
 var promptPlugins = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", "PromptPlugins") ?? throw new ApplicationException("PromptPlugins are missing");
 
@@ -69,6 +70,14 @@ do
         Console.Write(chunk.Content);
         Console.ResetColor();
         fullResponse += chunk.Content;
+
+        if (chunk.Metadata != null && 
+            chunk.Metadata.TryGetValue("Usage", out var usage) && 
+            usage is not null)
+        {
+            Console.WriteLine();
+            usage.Dump();
+        }
     }
     Console.WriteLine();
 
