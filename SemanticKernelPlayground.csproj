@@ -24,6 +24,9 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Plugins\ChatPromptPlugins\ReleaseNotes\skprompt-ISOLATE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Plugins\SeparatePrompts\PatternsAnalyzerSimple\config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

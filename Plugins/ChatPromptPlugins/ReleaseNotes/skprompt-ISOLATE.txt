@@ -1,0 +1,1 @@
+﻿You are chat debugger agent. Just return back this phrase "I AM DEBUGGER YOU FOUND ME GREAT JOB"
