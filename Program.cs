@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
@@ -15,6 +17,9 @@ var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey n
 
 var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
+
+builder.Services.AddLogging(configure => configure.AddConsole());
+builder.Services.AddLogging(configure => configure.SetMinimumLevel(LogLevel.Debug));
 
 var promptPlugins = Path.Combine(Directory.GetCurrentDirectory(), "Plugins", "PromptPlugins") ?? throw new ApplicationException("PromptPlugins are missing");
 
