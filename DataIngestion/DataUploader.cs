@@ -17,7 +17,7 @@ public class DataUploader(IVectorStore vectorStore, ITextEmbeddingGenerationServ
             Console.WriteLine($"Generating embedding for paragraph: {chunk.ParagraphId}");
             chunk.TextEmbedding = await textEmbeddingGenerator.GenerateEmbeddingAsync(chunk.Text);
 
-            Console.WriteLine($"Upserting chink to vector store: {chunk.Key}");
+            Console.WriteLine($"Upserting chunk to vector store: {chunk.Key}");
             await collection.UpsertAsync(chunk);
         }
     }

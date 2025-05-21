@@ -5,11 +5,10 @@ using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using Microsoft.SemanticKernel.Data;
 using Microsoft.SemanticKernel.Embeddings;
 using SemanticKernelPlayground.DataIngestion;
 using SemanticKernelPlayground.DataInjection;
-using SemanticKernelPlayground.Models;
+using SemanticKernelPlayground.Plugins;
 
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 #pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
@@ -42,23 +41,16 @@ var fileList = new List<string>()
 };
 
 var vectorStore = kernel.GetRequiredService<IVectorStore>();
-var textEmbeddingGenerator = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+var embeddingGenerationService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 foreach (var file in fileList)
 {
     var textChunks = DocumentReader.ParseFile(file);
-    var dataUploader = new DataUploader(vectorStore, textEmbeddingGenerator);
+    var dataUploader = new DataUploader(vectorStore, embeddingGenerationService);
     await dataUploader.UploadToVectorStore("loveStory", textChunks);
 }
 
-var collection = vectorStore.GetCollection<string, TextChunk>("loveStory");
-
-var stringMapper = new TextChunkTextSearchStringMapper();
-var resultMapper = new TextChunkTextSearchResultMapper();
-// todo: update not to use obsolete way
-var textSearch = new VectorStoreTextSearch<TextChunk>(collection, textEmbeddingGenerator, stringMapper, resultMapper);
-
-var searchPlugin = textSearch.CreateWithGetSearchResults("LoveStorySearchPlugin");
-kernel.Plugins.Add(searchPlugin);
+var searchPlugin = new SearchPlugin(vectorStore, embeddingGenerationService);
+kernel.Plugins.AddFromObject(searchPlugin);
 
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
@@ -70,7 +62,7 @@ AzureOpenAIPromptExecutionSettings openAiPromptExecutionSettings = new()
 var history = new ChatHistory();
 
 history.AddSystemMessage("You are a RAG‐enabled assistant. For every query:\n" +
-                         "1. Always invoke the “LoveStorySearchPlugin” to retrieve relevant text chunks.\n" +
+                         "1. Always try to invoke the “SearchPlugin” to retrieve relevant text chunks.\n" +
                          "2. Base your answer on those chunks whenever possible.\n" +
                          "3. Cite each fact with its source in the form (DocumentName, paragraph #).\n" +
                          "Keep answers concise and grounded in the retrieved material.");
