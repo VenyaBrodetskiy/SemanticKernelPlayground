@@ -12,8 +12,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.4" />
 	  <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />
 	  <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.4" />
+	  <PackageReference Include="Microsoft.KernelMemory.AI.AzureOpenAI" Version="0.98.250508.3" />
+	  <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
+	  <PackageReference Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.98.250508.3" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.48.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.49.0-preview" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,17 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.VectorData;
+using Microsoft.KernelMemory;
+using Microsoft.KernelMemory.DocumentStorage.DevTools;
+using Microsoft.KernelMemory.FileSystem.DevTools;
+using Microsoft.KernelMemory.MemoryStorage.DevTools;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using Microsoft.SemanticKernel.Embeddings;
-using SemanticKernelPlayground.DataIngestion;
-using SemanticKernelPlayground.DataInjection;
 using SemanticKernelPlayground.Plugins;
 
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -25,13 +24,45 @@ var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey n
 
 var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey)
-    .AddAzureOpenAITextEmbeddingGeneration(embedding, endpoint, apiKey)
-    .AddInMemoryVectorStore();
+    .AddAzureOpenAITextEmbeddingGeneration(embedding, endpoint, apiKey);
 
 builder.Services.AddLogging(configure => configure.AddConsole());
 builder.Services.AddLogging(configure => configure.SetMinimumLevel(LogLevel.Information));
 
 var kernel = builder.Build();
+
+var memory = new KernelMemoryBuilder()
+    .WithAzureOpenAITextGeneration(new AzureOpenAIConfig()
+    {
+        APIType = AzureOpenAIConfig.APITypes.ChatCompletion,
+        Endpoint = endpoint,
+        Deployment = modelName,
+        Auth = AzureOpenAIConfig.AuthTypes.APIKey,
+        APIKey = apiKey,
+    })
+    .WithAzureOpenAITextEmbeddingGeneration(new AzureOpenAIConfig()
+    {
+        APIType = AzureOpenAIConfig.APITypes.EmbeddingGeneration,
+        Endpoint = endpoint,
+        Deployment = embedding,
+        Auth = AzureOpenAIConfig.AuthTypes.APIKey,
+        APIKey = apiKey,
+    })
+    //.WithSimpleVectorDb(new SimpleVectorDbConfig()
+    //{
+    //    StorageType = FileSystemTypes.Disk
+    //})
+    //.WithSimpleFileStorage(new SimpleFileStorageConfig()
+    //{
+    //    StorageType = FileSystemTypes.Disk
+    //})
+    //.WithCustomTextPartitioningOptions(new TextPartitioningOptions()
+    //{
+    //    MaxTokensPerParagraph = 100,
+    //    OverlappingTokens = 20
+    //})
+    .Build<MemoryServerless>();
+
 
 // ingesting data to memory
 var fileList = new List<string>()
@@ -40,16 +71,15 @@ var fileList = new List<string>()
     "SampleData/Noa-Daniel-facts.txt"
 };
 
-var vectorStore = kernel.GetRequiredService<IVectorStore>();
-var embeddingGenerationService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 foreach (var file in fileList)
 {
-    var textChunks = DocumentReader.ParseFile(file);
-    var dataUploader = new DataUploader(vectorStore, embeddingGenerationService);
-    await dataUploader.UploadToVectorStore("loveStory", textChunks);
+    await memory.ImportDocumentAsync(file, Path.GetFileName(file));
+    Console.WriteLine("Importing file: " + file);
 }
 
-var searchPlugin = new SearchPlugin(vectorStore, embeddingGenerationService);
+//kernel.ImportPluginFromObject(new MemoryPlugin(memory, waitForIngestionToComplete: true), "memory");
+
+var searchPlugin = new SearchPlugin(memory);
 kernel.Plugins.AddFromObject(searchPlugin);
 
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
@@ -106,4 +136,3 @@ do
 
 } while (true);
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-#pragma warning restore SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
