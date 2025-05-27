@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using Microsoft.SemanticKernel.Connectors.SqlServer;
 using Microsoft.SemanticKernel.Embeddings;
 using SemanticKernelPlayground.DataIngestion;
 using SemanticKernelPlayground.DataInjection;
@@ -25,8 +25,7 @@ var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey n
 
 var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey)
-    .AddAzureOpenAITextEmbeddingGeneration(embedding, endpoint, apiKey)
-    .AddInMemoryVectorStore();
+    .AddAzureOpenAITextEmbeddingGeneration(embedding, endpoint, apiKey, dimensions: 1536);
 
 builder.Services.AddLogging(configure => configure.AddConsole());
 builder.Services.AddLogging(configure => configure.SetMinimumLevel(LogLevel.Information));
@@ -40,7 +39,9 @@ var fileList = new List<string>()
     "SampleData/Noa-Daniel-facts.txt"
 };
 
-var vectorStore = kernel.GetRequiredService<IVectorStore>();
+var vectorStore =
+    new SqlServerVectorStore("Server=localhost,1433;Database=VectorStore;User Id=sa;Password=StrongPassw0rd;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;");
+
 var embeddingGenerationService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
 foreach (var file in fileList)
 {
