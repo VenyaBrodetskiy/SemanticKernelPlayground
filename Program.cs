@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.Connectors.InMemory;
@@ -51,20 +52,37 @@ foreach (var file in fileList)
 var searchPlugin = new SearchPlugin(vectorStore, embeddingGenerationService);
 kernel.Plugins.AddFromObject(searchPlugin);
 
-var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-
-AzureOpenAIPromptExecutionSettings openAiPromptExecutionSettings = new()
+var searchInDataAgent = new ChatCompletionAgent()
 {
-    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+    Name = "SearchInDataAgent",
+    Description = "An agent that searches for data in vector store and returns relevant information.",
+    Kernel = kernel,
+    Arguments = new(
+        new AzureOpenAIPromptExecutionSettings()
+        {
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+        }),
+    Instructions = "You are a RAG‐enabled assistant. For every query:\n" +
+                   "1. Always try to invoke the “SearchPlugin” to retrieve relevant text chunks.\n" +
+                   "2. Base your answer on those chunks whenever possible.\n" +
+                   "3. Cite each fact with its source in the form (DocumentName, paragraph #).\n" +
+                   "Keep answers concise and grounded in the retrieved material."
 };
 
-var history = new ChatHistory();
+//var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
-history.AddSystemMessage("You are a RAG‐enabled assistant. For every query:\n" +
-                         "1. Always try to invoke the “SearchPlugin” to retrieve relevant text chunks.\n" +
-                         "2. Base your answer on those chunks whenever possible.\n" +
-                         "3. Cite each fact with its source in the form (DocumentName, paragraph #).\n" +
-                         "Keep answers concise and grounded in the retrieved material.");
+//AzureOpenAIPromptExecutionSettings openAiPromptExecutionSettings = new()
+//{
+//    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+//};
+
+//var history = new ChatHistory();
+
+//history.AddSystemMessage("You are a RAG‐enabled assistant. For every query:\n" +
+//                         "1. Always try to invoke the “SearchPlugin” to retrieve relevant text chunks.\n" +
+//                         "2. Base your answer on those chunks whenever possible.\n" +
+//                         "3. Cite each fact with its source in the form (DocumentName, paragraph #).\n" +
+//                         "Keep answers concise and grounded in the retrieved material.");
 
 do
 {
@@ -78,30 +96,20 @@ do
         break;
     }
 
-    history.AddUserMessage(userInput!);
+    var userChatMessage = new ChatMessageContent(AuthorRole.User, userInput);
 
-    var streamingResponse =
-        chatCompletionService.GetStreamingChatMessageContentsAsync(
-            history,
-            openAiPromptExecutionSettings,
-            kernel);
+    var agentResponses = searchInDataAgent.InvokeAsync(userChatMessage);
 
     Console.ForegroundColor = ConsoleColor.Green;
     Console.Write("Agent > ");
     Console.ResetColor();
 
-    var fullResponse = "";
-    await foreach (var chunk in streamingResponse)
+    await foreach (var response in agentResponses)
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.Write(chunk.Content);
+        Console.WriteLine(response.Message);
+        Console.WriteLine("################ FINISHED ANSWER #######################");
         Console.ResetColor();
-        fullResponse += chunk.Content;
     }
-    Console.WriteLine();
-
-    history.AddMessage(AuthorRole.Assistant, fullResponse);
-
-
 } while (true);
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
