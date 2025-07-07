@@ -69,20 +69,7 @@ var searchInDataAgent = new ChatCompletionAgent()
                    "Keep answers concise and grounded in the retrieved material."
 };
 
-//var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-
-//AzureOpenAIPromptExecutionSettings openAiPromptExecutionSettings = new()
-//{
-//    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
-//};
-
-//var history = new ChatHistory();
-
-//history.AddSystemMessage("You are a RAG‐enabled assistant. For every query:\n" +
-//                         "1. Always try to invoke the “SearchPlugin” to retrieve relevant text chunks.\n" +
-//                         "2. Base your answer on those chunks whenever possible.\n" +
-//                         "3. Cite each fact with its source in the form (DocumentName, paragraph #).\n" +
-//                         "Keep answers concise and grounded in the retrieved material.");
+var thread = new ChatHistoryAgentThread();
 
 do
 {
@@ -98,7 +85,7 @@ do
 
     var userChatMessage = new ChatMessageContent(AuthorRole.User, userInput);
 
-    var agentResponses = searchInDataAgent.InvokeAsync(userChatMessage);
+    var agentResponses = searchInDataAgent.InvokeAsync(userChatMessage, thread);
 
     Console.ForegroundColor = ConsoleColor.Green;
     Console.Write("Agent > ");
