@@ -1,17 +1,15 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using Microsoft.SemanticKernel.Embeddings;
+using Microsoft.SemanticKernel.Connectors.InMemory;
 using SemanticKernelPlayground.DataIngestion;
-using SemanticKernelPlayground.DataInjection;
 using SemanticKernelPlayground.Plugins;
 
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -25,8 +23,9 @@ var apiKey = configuration["ApiKey"] ?? throw new ApplicationException("ApiKey n
 
 var builder = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey)
-    .AddAzureOpenAITextEmbeddingGeneration(embedding, endpoint, apiKey)
-    .AddInMemoryVectorStore();
+    .AddAzureOpenAIEmbeddingGenerator(embedding, endpoint, apiKey);
+
+builder.Services.AddInMemoryVectorStore();
 
 builder.Services.AddLogging(configure => configure.AddConsole());
 builder.Services.AddLogging(configure => configure.SetMinimumLevel(LogLevel.Information));
@@ -40,8 +39,8 @@ var fileList = new List<string>()
     "SampleData/Noa-Daniel-facts.txt"
 };
 
-var vectorStore = kernel.GetRequiredService<IVectorStore>();
-var embeddingGenerationService = kernel.GetRequiredService<ITextEmbeddingGenerationService>();
+var vectorStore = kernel.GetRequiredService<InMemoryVectorStore>();
+var embeddingGenerationService = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
 foreach (var file in fileList)
 {
     var textChunks = DocumentReader.ParseFile(file);
@@ -106,4 +105,3 @@ do
 
 } while (true);
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-#pragma warning restore SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.

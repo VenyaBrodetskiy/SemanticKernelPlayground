@@ -1,6 +1,6 @@
 ﻿using SemanticKernelPlayground.Models;
 
-namespace SemanticKernelPlayground.DataInjection;
+namespace SemanticKernelPlayground.DataIngestion;
 
 public class DocumentReader
 {
@@ -28,7 +28,6 @@ public class DocumentReader
                 DocumentName = docName,
                 ParagraphId = paragraphId,
                 Text = line,
-                TextEmbedding = ReadOnlyMemory<float>.Empty
             });
         }
 

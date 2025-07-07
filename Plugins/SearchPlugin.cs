@@ -1,16 +1,14 @@
 ﻿using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Embeddings;
 using SemanticKernelPlayground.Models;
 using System.ComponentModel;
 using System.Text;
-
-#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+using Microsoft.Extensions.AI;
 
 namespace SemanticKernelPlayground.Plugins;
 
-public class SearchPlugin(IVectorStore vectorStore,
-    ITextEmbeddingGenerationService embeddingService)
+public class SearchPlugin(VectorStore vectorStore,
+    IEmbeddingGenerator<string, Embedding<float>> embeddingService)
 {
     [KernelFunction]
     [Description("Search for data in vector store")]
@@ -20,9 +18,9 @@ public class SearchPlugin(IVectorStore vectorStore,
     {
         var collection = vectorStore.GetCollection<string, TextChunk>("loveStory");
         
-        var queryEmbedding = await embeddingService.GenerateEmbeddingAsync(query);
+        var queryEmbedding = await embeddingService.GenerateAsync(query);
 
-        var searchResults = collection.SearchEmbeddingAsync(queryEmbedding, maxResults);
+        var searchResults = collection.SearchAsync(queryEmbedding, maxResults);
 
         var resultList = new List<VectorSearchResult<TextChunk>>();
         await foreach (var result in searchResults)
@@ -30,7 +28,7 @@ public class SearchPlugin(IVectorStore vectorStore,
             resultList.Add(result);
         }
 
-        if (!resultList.Any())
+        if (resultList.Count == 0)
         {
             return "No relevant information found for your query in vector store";
         }
@@ -50,5 +48,3 @@ public class SearchPlugin(IVectorStore vectorStore,
         return builder.ToString();
     }
 }
-
-#pragma warning restore SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
