@@ -1,16 +1,23 @@
-﻿using Microsoft.Extensions.AI;
+﻿using Azure.Identity;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
+using Microsoft.SemanticKernel.Agents.AzureAI;
+using Microsoft.SemanticKernel.Agents.Orchestration.GroupChat;
+using Microsoft.SemanticKernel.Agents.Orchestration.Handoff;
+using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.Connectors.InMemory;
 using SemanticKernelPlayground.DataIngestion;
 using SemanticKernelPlayground.Plugins;
 
+#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -32,6 +39,32 @@ builder.Services.AddLogging(configure => configure.AddConsole());
 builder.Services.AddLogging(configure => configure.SetMinimumLevel(LogLevel.Information));
 
 var kernel = builder.Build();
+
+//var credentials = new AzureCliCredential();
+//// azure ai agent
+//var azureAgentsClient =
+//    AzureAIAgent.CreateAgentsClient("https://venyab-0723-resource.services.ai.azure.com/api/projects/venyab-0723", credentials);
+//var azureAgent = await azureAgentsClient.Administration.GetAgentAsync("asst_hksaCOBws7ppSMrU5dUKZbYu");
+//var agent = new AzureAIAgent(azureAgent, azureAgentsClient);
+
+var builder2 = Kernel.CreateBuilder()
+    .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
+
+var kernel2 = builder2.Build();
+
+var investigatorAgent = new ChatCompletionAgent()
+{
+    Name = "InvestigatorAgent",
+    Description = "An agent that manages other agents in order to provide investigation about the case",
+    Kernel = kernel2,
+    Arguments = new(
+        new AzureOpenAIPromptExecutionSettings()
+        {
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+        }),
+    Instructions = "You are a investigator agent. You task is to manage, orchestrate other agents in order to provide deep investigation about the case"
+};
+
 
 // ingesting data to memory
 var fileList = new List<string>()
@@ -70,12 +103,47 @@ var searchInDataAgent = new ChatCompletionAgent()
 };
 
 var thread = new ChatHistoryAgentThread();
+//var thread = new AzureAIAgentThread(agent.Client);
 
-do
+var handoffs = OrchestrationHandoffs
+    .StartWith(investigatorAgent)
+    .Add(investigatorAgent, searchInDataAgent, "Ask this agent if you need someone to search in files/memory for you");
+
+ChatHistory history = [];
+ValueTask responseCallback(ChatMessageContent response)
 {
+    history.Add(response);
+
+    if (response.Content is null) 
+        return ValueTask.CompletedTask;
+
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.Write("Agent > ");
+    Console.ResetColor();
+
+    Console.ForegroundColor = ConsoleColor.Yellow;
+    Console.WriteLine($"{response.AuthorName}: {response.Content}");
+
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.Write("Me > ");
     Console.ResetColor();
+    return ValueTask.CompletedTask;
+}
+
+var orchestration = new HandoffOrchestration(
+    handoffs, investigatorAgent, searchInDataAgent)
+{
+    ResponseCallback = responseCallback,
+};
+
+var runtime = new InProcessRuntime();
+await runtime.StartAsync();
+
+Console.ForegroundColor = ConsoleColor.Cyan;
+Console.Write("Me > ");
+Console.ResetColor();
+do
+{
 
     var userInput = Console.ReadLine();
     if (userInput == "exit")
@@ -85,18 +153,11 @@ do
 
     var userChatMessage = new ChatMessageContent(AuthorRole.User, userInput);
 
-    var agentResponses = searchInDataAgent.InvokeAsync(userChatMessage, thread);
+    var agentResponses = await orchestration.InvokeAsync(userInput, runtime);
 
-    Console.ForegroundColor = ConsoleColor.Green;
-    Console.Write("Agent > ");
-    Console.ResetColor();
+    
 
-    await foreach (var response in agentResponses)
-    {
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine(response.Message);
-        Console.WriteLine("################ FINISHED ANSWER #######################");
-        Console.ResetColor();
-    }
 } while (true);
+#pragma warning disable SKEXP0001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 #pragma warning restore SKEXP0010 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning restore SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
