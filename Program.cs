@@ -45,7 +45,7 @@ var kernel = builder.Build();
 //var azureAgentsClient =
 //    AzureAIAgent.CreateAgentsClient("https://venyab-0723-resource.services.ai.azure.com/api/projects/venyab-0723", credentials);
 //var azureAgent = await azureAgentsClient.Administration.GetAgentAsync("asst_hksaCOBws7ppSMrU5dUKZbYu");
-//var agent = new AzureAIAgent(azureAgent, azureAgentsClient);
+//var investigatorAgent = new AzureAIAgent(azureAgent, azureAgentsClient);
 
 var builder2 = Kernel.CreateBuilder()
     .AddAzureOpenAIChatCompletion(modelName, endpoint, apiKey);
@@ -103,7 +103,7 @@ var searchInDataAgent = new ChatCompletionAgent()
 };
 
 var thread = new ChatHistoryAgentThread();
-//var thread = new AzureAIAgentThread(agent.Client);
+//var thread = new AzureAIAgentThread(investigatorAgent.Client);
 
 var handoffs = OrchestrationHandoffs
     .StartWith(investigatorAgent)
