@@ -12,11 +12,11 @@ public class SearchPlugin(VectorStore vectorStore,
 {
     [KernelFunction]
     [Description("Search for data in vector store")]
-    public async Task<string> SearchInLoveStoryCollection(
+    public async Task<string> SearchInInvestigationCaseCollection(
         [Description("The search query")] string query,
         [Description("Maximum number of results to return")] int maxResults = 5)
     {
-        var collection = vectorStore.GetCollection<string, TextChunk>("loveStory");
+        var collection = vectorStore.GetCollection<string, TextChunk>("investigationCase");
         
         var queryEmbedding = await embeddingService.GenerateAsync(query);
 

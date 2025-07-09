@@ -62,15 +62,23 @@ var investigatorAgent = new ChatCompletionAgent()
         {
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
         }),
-    Instructions = "You are a investigator agent. You task is to manage, orchestrate other agents in order to provide deep investigation about the case"
+    Instructions = "You are an investigator agent. Your task is to manage and orchestrate other agents to provide deep investigation about the case. " +
+                   "You have access to two specialized agents:\n" +
+                   "1. SearchInDataAgent - Use this agent to search for specific information in the case files and evidence.\n" +
+                   "2. ContradictionAnalysisAgent - Use this agent to analyze data for contradictions, inconsistencies, and conflicting statements.\n" +
+                   "Both agents can return to you with their findings for you to summarize and present comprehensive results. " +
+                   "Coordinate their efforts to build a complete picture of the case."
 };
 
 
 // ingesting data to memory
 var fileList = new List<string>()
 {
-    "SampleData/Elena-Adam-facts.txt",
-    "SampleData/Noa-Daniel-facts.txt"
+    "SampleData/CaseStoryExplanation.txt",
+    "SampleData/ForensicReport.txt",
+    "SampleData/SecurityFootageReport.txt",
+    "SampleData/Statement_MrsGreen.txt",
+    "SampleData/Statement_WitnessB.txt"
 };
 
 var vectorStore = kernel.GetRequiredService<InMemoryVectorStore>();
@@ -79,7 +87,7 @@ foreach (var file in fileList)
 {
     var textChunks = DocumentReader.ParseFile(file);
     var dataUploader = new DataUploader(vectorStore, embeddingGenerationService);
-    await dataUploader.UploadToVectorStore("loveStory", textChunks);
+    await dataUploader.UploadToVectorStore("investigationCase", textChunks);
 }
 
 var searchPlugin = new SearchPlugin(vectorStore, embeddingGenerationService);
@@ -96,10 +104,30 @@ var searchInDataAgent = new ChatCompletionAgent()
             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
         }),
     Instructions = "You are a RAG‐enabled assistant. For every query:\n" +
-                   "1. Always try to invoke the “SearchPlugin” to retrieve relevant text chunks.\n" +
+                   "1. Always try to invoke the \"SearchPlugin\" to retrieve relevant text chunks.\n" +
                    "2. Base your answer on those chunks whenever possible.\n" +
                    "3. Cite each fact with its source in the form (DocumentName, paragraph #).\n" +
                    "Keep answers concise and grounded in the retrieved material."
+};
+
+var contradictionAnalysisAgent = new ChatCompletionAgent()
+{
+    Name = "ContradictionAnalysisAgent", 
+    Description = "An agent that analyzes data for contradictions, inconsistencies, and conflicting statements.",
+    Kernel = kernel,
+    Arguments = new(
+        new AzureOpenAIPromptExecutionSettings()
+        {
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+        }),
+    Instructions = "You are a contradiction analysis specialist. Your task is to:\n" +
+                   "1. Carefully examine provided data for any contradictions, inconsistencies, or conflicting statements.\n" +
+                   "2. Compare different sources and identify discrepancies in facts, timelines, or accounts.\n" +
+                   "3. Look for logical inconsistencies within individual statements or across multiple sources.\n" +
+                   "4. Highlight any suspicious patterns or elements that don't align.\n" +
+                   "5. Use the SearchPlugin to gather additional context when needed to verify contradictions.\n" +
+                   "6. Present your findings clearly, citing specific sources and explaining the nature of each contradiction.\n" +
+                   "Always be thorough and objective in your analysis. If you need more data to verify potential contradictions, ask for it."
 };
 
 var thread = new ChatHistoryAgentThread();
@@ -107,7 +135,12 @@ var thread = new ChatHistoryAgentThread();
 
 var handoffs = OrchestrationHandoffs
     .StartWith(investigatorAgent)
-    .Add(investigatorAgent, searchInDataAgent, "Ask this agent if you need someone to search in files/memory for you");
+    .Add(investigatorAgent, searchInDataAgent, "Ask this agent if you need someone to search in files/memory for you")
+    .Add(investigatorAgent, contradictionAnalysisAgent, "Ask this agent to analyze data for contradictions and inconsistencies")
+    .Add(searchInDataAgent, contradictionAnalysisAgent, "Ask this agent to analyze data for contradictions and inconsistencies")
+    .Add(searchInDataAgent, investigatorAgent, "Return to investigator results of your work so that he could summarize it and return to user or continue the flow")
+    .Add(contradictionAnalysisAgent, investigatorAgent, "Return to investigator results of your work so that he could summarize it and return to user or continue the flow")
+    .Add(contradictionAnalysisAgent, searchInDataAgent, "Ask this agent if you need some additional information in files/memory for you");
 
 ChatHistory history = [];
 ValueTask responseCallback(ChatMessageContent response)
@@ -131,7 +164,7 @@ ValueTask responseCallback(ChatMessageContent response)
 }
 
 var orchestration = new HandoffOrchestration(
-    handoffs, investigatorAgent, searchInDataAgent)
+    handoffs, investigatorAgent, searchInDataAgent, contradictionAnalysisAgent)
 {
     ResponseCallback = responseCallback,
 };
@@ -149,6 +182,11 @@ do
     if (userInput == "exit")
     {
         break;
+    }
+
+    if (string.IsNullOrWhiteSpace(userInput))
+    {
+        continue;
     }
 
     var userChatMessage = new ChatMessageContent(AuthorRole.User, userInput);
