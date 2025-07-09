@@ -1,0 +1,47 @@
+Case Story Explanation
+======================
+
+Summary:
+--------
+A woman was found dead in her apartment from blunt force trauma to the head, with the estimated time of death between 9:10 and 9:20 PM. The case involves multiple witnesses, forensic evidence, and security footage, each providing overlapping and sometimes contradictory details. Below is a synthesis of the main facts, contradictions, and notable details from each source.
+
+Key Characters:
+- The Victim: Female, lived alone with a small terrier dog, described as anxious in the days before her death.
+- Mr. Carter: Seen by multiple witnesses near the time of death, appeared nervous, possibly carrying a dark object.
+- Mrs. Green: Neighbor and friend, delivered groceries, returned to the building later, provides a detailed account.
+- Witness B: Another resident, observed Mr. Carter and Mrs. Green, provides reflections on memory and building life.
+
+Timeline & Evidence:
+--------------------
+- 8:50 PM: Mrs. Green arrives at the victim's apartment, notes the victim's anxiety and mentions of strange noises. Leaves at 8:57 PM, sees Mr. Carter waiting by the elevator.
+- 8:55–9:05 PM: Mrs. Green and Witness B both see each other in the lobby. Security footage confirms their presence.
+- 9:10 PM: Witness B is in the elevator with Mr. Carter, who appears nervous. Mr. Carter goes to the 7th floor (victim's floor).
+- 9:00–9:13 PM: Multiple sources report a loud argument and a dog barking. Security audio records the argument and a door slamming.
+- 9:12 PM: Victim's dog is seen in the hallway, barking and running toward the stairwell.
+- 9:14 PM: A thud is heard (security audio).
+- 9:15–9:18 PM: Mr. Carter seen leaving, police cars arrive, lights in the victim's apartment still on.
+- 9:18–9:21 PM: Mrs. Green returns to retrieve her umbrella, sees police, notes lobby details.
+- 9:22 PM: Apartment lights turned off (smart home log).
+- 9:40–9:41 PM: Black duffel bag with blood found in dumpster; blurry footage shows a figure disposing of it.
+
+Contradictions & Notable Details:
+---------------------------------
+- Mrs. Green did not hear an argument while in the apartment, but others and security audio confirm one occurred.
+- Mr. Carter's behavior is described as nervous by both Mrs. Green and Witness B, but neither can confirm if he was carrying a bag at all times.
+- The victim's dog is described as calm by Mrs. Green, but agitated and with blood on its fur in forensics.
+- Security footage is incomplete due to camera malfunctions and time discrepancies.
+- Both witnesses reflect on the unreliability of memory, and Mrs. Green notes being distracted by personal matters.
+- Forensics show no forced entry, but a partial print from Mr. Carter is found on the door handle.
+- The victim had a large cash withdrawal the morning of the murder, but the money was not found.
+- Several unrelated details (lost cat, bakery gossip, elevator issues, local history, etc.) are included in the statements, reflecting the complexity and noise of real-world investigations.
+
+How to Use This File:
+---------------------
+This summary is designed to help you quickly check if your POC or agent system is correctly extracting, grounding, and reasoning about:
+- The main timeline of events
+- Contradictions between sources
+- The presence of irrelevant or misleading details
+- The ability to cite and cross-reference facts from different files
+
+If you add more data or agents, update this file to reflect new contradictions or evidence.
+
