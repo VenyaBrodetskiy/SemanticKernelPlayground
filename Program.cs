@@ -74,7 +74,6 @@ var investigatorAgent = new ChatCompletionAgent()
 // ingesting data to memory
 var fileList = new List<string>()
 {
-    "SampleData/CaseStoryExplanation.txt",
     "SampleData/ForensicReport.txt",
     "SampleData/SecurityFootageReport.txt",
     "SampleData/Statement_MrsGreen.txt",
@@ -147,7 +146,7 @@ ValueTask responseCallback(ChatMessageContent response)
 {
     history.Add(response);
 
-    if (response.Content is null) 
+    if (response.Content is null)
         return ValueTask.CompletedTask;
 
     Console.ForegroundColor = ConsoleColor.Green;
@@ -167,6 +166,7 @@ var orchestration = new HandoffOrchestration(
     handoffs, investigatorAgent, searchInDataAgent, contradictionAnalysisAgent)
 {
     ResponseCallback = responseCallback,
+    LoggerFactory = kernel.GetRequiredService<ILoggerFactory>()
 };
 
 var runtime = new InProcessRuntime();
