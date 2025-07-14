@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.VectorData;
+﻿using Azure;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using SemanticKernelPlayground.Models;
 using System.ComponentModel;
 using System.Text;
-using Microsoft.Extensions.AI;
 
 namespace SemanticKernelPlayground.Plugins;
 
@@ -16,6 +18,9 @@ public class SearchPlugin(VectorStore vectorStore,
         [Description("The search query")] string query,
         [Description("Maximum number of results to return")] int maxResults = 5)
     {
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.WriteLine($"Search query: {query}, Max results: {maxResults}");
+        Console.ResetColor();
         var collection = vectorStore.GetCollection<string, TextChunk>("investigationCase");
         
         var queryEmbedding = await embeddingService.GenerateAsync(query);
