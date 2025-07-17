@@ -1,6 +1,4 @@
-﻿using Azure;
-using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.AI;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using SemanticKernelPlayground.Models;
@@ -16,9 +14,9 @@ public class SearchPlugin(VectorStore vectorStore,
     [Description("Search for data in vector store")]
     public async Task<string> SearchInInvestigationCaseCollection(
         [Description("The search query")] string query,
-        [Description("Maximum number of results to return")] int maxResults = 5)
+        [Description("Maximum number of results to return")] int maxResults)
     {
-        Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine($"Search query: {query}, Max results: {maxResults}");
         Console.ResetColor();
         var collection = vectorStore.GetCollection<string, TextChunk>("investigationCase");
