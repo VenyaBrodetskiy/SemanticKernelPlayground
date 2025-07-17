@@ -3,12 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Orchestration.GroupChat;
 using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.InMemory;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using SemanticKernelPlayground;
 using SemanticKernelPlayground.Agents;
 using SemanticKernelPlayground.DataIngestion;
@@ -104,8 +102,9 @@ ValueTask responseCallback(ChatMessageContent response)
 }
 
 //var userInput = Console.ReadLine();
-//var userInput = "Who is the biggest liar in this case";
 var userInput = "Find some internal contradictions in statements of Mrs Green";
+//var userInput = "Who is the biggest liar in this case";
+//var userInput = "Investigate what happened in this case, give me summary on what's happened, who lies, who we might suspect and also mention irrelevant details if any";
 
 var orchestration = new GroupChatOrchestration(
     new AiGroupChatManager(userInput,

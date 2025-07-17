@@ -13,26 +13,68 @@ public sealed class AiGroupChatManager(string userRequest, IChatCompletionServic
 {
     private static class Prompts
     {
-        public static string Termination(string userRequest) =>
+        private static string FormatTeam(GroupChatTeam team)
+        {
+            if (team.Count == 0)
+                return "No specific agents are currently available.";
+
+            var agentDescriptions = team.Select((kvp, index) => 
+                $"{index + 1}. {kvp.Key} ({kvp.Value.Type}) - {kvp.Value.Description}");
+            
+            return string.Join("\n", agentDescriptions);
+        }
+
+        private static string BaseInvestigationPrompt(string userRequest) =>
             $"""
-             You are a lead investigator determining if the current investigation on '{userRequest}' is complete.
-             Evaluate whether all relevant information has been gathered, contradictions analyzed, and a conclusion reached.
-             If the investigation has reached a comprehensive conclusion with sufficient evidence and analysis, respond with True.
-             If there are still unanswered questions, unexplored angles, or insufficient analysis, respond with False.
-             Respond ONLY with True or False
+             You are an investigator planner agent. Your task is to manage and orchestrate other agents to provide deep investigation about the criminal case. User request is '{userRequest}'. 
              """;
 
-        public static string Selection(string userRequest, string availableAgents) =>
+        public static string Termination(string userRequest) =>
             $"""
-             You are an investigator agent. Your task is to manage and orchestrate other agents to provide deep investigation about the case. 
-             You have access to two specialized agents:
-             1. SearchInDataAgent - Use this agent to search for specific information in the case files and evidence, like statements, facts.
-             2. AnalysisAgent - Use this agent to analyze facts, statement etc, but he needs data to be provided first
-             Both agents can return to you with their findings for you to summarize and present comprehensive results.
-             Coordinate their efforts to build a complete picture of the case.
+             {BaseInvestigationPrompt(userRequest)}
+
+             Your job is to decide whether the investigation is complete.  To do so:
+
+             1. **Review full chat history** (all system/user/assistant and Function/Tool messages).
+             2. **List every planner instruction** issued so far (e.g. “Call SearchInDataAgent”, “Call AnalysisAgent”, “Call FilterResults”). Most important planner instruction is the last instruction.
+             3. **Short summary of status so far**:
+                - **Planner said:** “…”  
+                - **Investigation current status:** e.g. “SearchInDataAgent ran and returned X (good/bad). AnalysisAgent has/has not run.”  
+                - **Next planned steps:** based on planner’s outstanding instructions
+             4. **Final decision**:
+                - If **any** planner step is still pending or incomplete, return **False**.
+                - Only if **all** planner steps are executed, contradictions analyzed, return **True**.
+
+             **Output format** (no extra text):
+             - **Value:** `True` or `False`  
+             - **Reason:** A brief text covering:
+               1. Which planner steps remain pending/incomplete (or “none”).  
+               2. The short investigation status summary.  
+               3. Why you judged completion status.
+
+             Respond **only** with the JSON-style fields `Value` and `Reason`.
+             """;
+
+        public static string Selection(string userRequest, GroupChatTeam team) =>
+            $"""
+             {BaseInvestigationPrompt(userRequest)}
              
-             You task is to summarize results of investigation efforts done up to this moment, create plan of investigation (next steps only), explaining which agent should be called first, which should be called next. Also explain it to other agents, explain why you selected them and what is their task. Put this information in Reason field.
-             In value field you should put the name of the participant you would like to select next. If you think that investigation is finished, then return InvestigatorAgent with Reason = "Investigation is finished, I will summarize results now" and then call FilterResults method to summarize results.
+             You have access to the following specialized agents:
+             {FormatTeam(team)}
+             These agents can return to you with their findings for you to summarize and present comprehensive results.
+             Coordinate their efforts to build a complete picture of the case.
+
+             Your task is to decide the next steps of the investigation and select the most appropriate agents to continue.
+             Based on the current state of the investigation, determine:
+             1. What specific tasks need to be accomplished in next couple of calls
+             2. Which agents are best suited for this task
+             3. What you expect from the selected agents
+             
+             Explain to other agents why you selected them and what is their specific task. 
+             It's especially important to give good instructions to next agent, as after his actions you might decide to adjust investigation flow.
+             In the beginning of your response mention, that you are investigator planner, and that your instructions should be respected by other agents.
+             Put this information in the Reason field. Make it clear and it's okay to be verbose.
+             In the Value field, put the name of the participant you would like to select next. Never return null or empty value, even if you think that investigation is finished, still return one of the available agents, with Reason = "Investigation is finished, I need to summarize results now"
              """;
 
         public static string Filter(string userRequest) =>
@@ -45,7 +87,8 @@ public sealed class AiGroupChatManager(string userRequest, IChatCompletionServic
              3. Conclusions that can be drawn from the evidence
              4. Any remaining uncertainties or limitations of the investigation
 
-             Present a comprehensive but concise final report on the investigation's findings.
+             Present a comprehensive final report on the investigation's findings.
+             Remember than user won't see previous chat history, so you need to summarize everything in a single response.
              """;
     }
 
@@ -72,12 +115,12 @@ public sealed class AiGroupChatManager(string userRequest, IChatCompletionServic
         Console.Write("Chat manager [Selecting next agent]> ");
         Console.ResetColor();
 
-        var result = GetResponseAsync<string>(history, Prompts.Selection(userRequest, team.FormatList()), cancellationToken);
+        var result = GetResponseAsync<string>(history, Prompts.Selection(userRequest, team), cancellationToken);
         Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine($"Result: {result.Result.Value}, reason: {result.Result.Reason}");
         Console.ResetColor();
 
-        history.AddMessage(AuthorRole.Tool, result.Result.Reason);
+        history.AddMessage(AuthorRole.Assistant, result.Result.Reason);
         return result;
     }
 
@@ -100,7 +143,8 @@ public sealed class AiGroupChatManager(string userRequest, IChatCompletionServic
         GroupChatManagerResult<bool> result = await base.ShouldTerminate(history, cancellationToken);
         if (!result.Value)
         {
-            result = await this.GetResponseAsync<bool>(history, Prompts.Termination(userRequest), cancellationToken);
+            result = await GetResponseAsync<bool>(history, Prompts.Termination(userRequest), cancellationToken);
+            history.AddMessage(AuthorRole.Assistant, result.Reason);
         }
         Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine($"Result: {result.Value}, reason: {result.Reason}");
