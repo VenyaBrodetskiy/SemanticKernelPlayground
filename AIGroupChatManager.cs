@@ -33,10 +33,10 @@ public sealed class AiGroupChatManager(string userRequest, IChatCompletionServic
             $"""
              {BaseInvestigationPrompt(userRequest)}
 
-             Your job is to decide whether the investigation is complete.  To do so:
+             Your job is to decide whether the investigation is complete. To do so:
 
              1. **Review full chat history** (all system/user/assistant and Function/Tool messages).
-             2. **List every planner instruction** issued so far (e.g. “Call SearchInDataAgent”, “Call AnalysisAgent”, “Call FilterResults”). Most important planner instruction is the last instruction.
+             2. **List every investigator planner instruction from his last planning** issued so far (e.g. “Call SearchInDataAgent”, “Call AnalysisAgent”, “Call FilterResults”). Most important planner instruction is the last instruction.
              3. **Short summary of status so far**:
                 - **Planner said:** “…”  
                 - **Investigation current status:** e.g. “SearchInDataAgent ran and returned X (good/bad). AnalysisAgent has/has not run.”  
@@ -45,11 +45,13 @@ public sealed class AiGroupChatManager(string userRequest, IChatCompletionServic
                 - If **any** planner step is still pending or incomplete, return **False**.
                 - Only if **all** planner steps are executed, contradictions analyzed, return **True**.
 
+             Overall, you should tend to continue investigation always, especially if investigation planner has not yet concluded that investigation is finished.
+             
              **Output format** (no extra text):
              - **Value:** `True` or `False`  
-             - **Reason:** A brief text covering:
+             - **Reason:** A deep reasoning covering:
                1. Which planner steps remain pending/incomplete (or “none”).  
-               2. The short investigation status summary.  
+               2. The investigation status summary.  
                3. Why you judged completion status.
 
              Respond **only** with the JSON-style fields `Value` and `Reason`.
@@ -69,6 +71,8 @@ public sealed class AiGroupChatManager(string userRequest, IChatCompletionServic
              1. What specific tasks need to be accomplished in next couple of calls
              2. Which agents are best suited for this task
              3. What you expect from the selected agents
+             
+             As an investigator, you have big experience and good feeling about where to dig deeper, so guide your team to success, be very cautious and sceptical about their findings, check twice everything.
              
              Explain to other agents why you selected them and what is their specific task. 
              It's especially important to give good instructions to next agent, as after his actions you might decide to adjust investigation flow.
@@ -155,7 +159,11 @@ public sealed class AiGroupChatManager(string userRequest, IChatCompletionServic
 
     private async ValueTask<GroupChatManagerResult<TValue>> GetResponseAsync<TValue>(ChatHistory history, string prompt, CancellationToken cancellationToken = default)
     {
-        OpenAIPromptExecutionSettings executionSettings = new() { ResponseFormat = typeof(GroupChatManagerResult<TValue>) };
+        OpenAIPromptExecutionSettings executionSettings = new()
+        {
+            ResponseFormat = typeof(GroupChatManagerResult<TValue>),
+            Temperature = 0.1f,
+        };
         var request = new ChatHistory(history);
         request.AddAssistantMessage(prompt);
         ChatMessageContent response = await chatCompletion.GetChatMessageContentAsync(request, executionSettings, kernel: null, cancellationToken);
