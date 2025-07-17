@@ -111,9 +111,8 @@ var orchestration = new GroupChatOrchestration(
     new AiGroupChatManager(userInput,
         kernelWithoutTools.GetRequiredService<IChatCompletionService>())
     {
-        MaximumInvocationCount = 10,
+        MaximumInvocationCount = 15,
     },
-    investigatorAgent,
     searchInDataAgent,
     contradictionAnalysisAgent
 )
